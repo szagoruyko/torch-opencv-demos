@@ -1,6 +1,9 @@
 Torch7-OpenCV demos
 ==================
 
+Real-time demos that use deep convolutional neural networks to classify and caption
+what they see in real-time from a webcam stream.
+
 All demos use CPU, but it's trivial to fix them to work with CUDA or OpenCL.
 
 Quick install on OS X:
@@ -54,6 +57,10 @@ https://github.com/karpathy/neuraltalk2 first and then run the demo as:
 ```
 th videocaptioning.lua -gpuid -1 -model model_id1-501-1448236541_cpu.t7
 ```
+
+Caption is displayed on top:
+
+![neuraltalk2](https://cloud.githubusercontent.com/assets/4953728/12300267/01abc18e-ba1b-11e5-8b2b-da9c9141fd55.png)
 
 # Credits
 

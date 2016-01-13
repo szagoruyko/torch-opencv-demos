@@ -43,6 +43,20 @@ IMAGINE Lab gives an example:
 
 ![age&gender](https://cloud.githubusercontent.com/assets/4953728/12299217/fc819f80-ba15-11e5-95de-653c9fda9b83.png)
 
+NeuralTalk2 demo
+================
+
+This demo uses NeuralTalk2 captioning code from Andrej Karpathy: https://github.com/karpathy/neuraltalk2
+
+The code captions live webcam demo. Follow the installation instructions at
+https://github.com/karpathy/neuraltalk2 first and then run the demo as:
+
+```
+th videocaptioning.lua -gpuid -1 -model model_id1-501-1448236541_cpu.t7
+```
+
 # Credits
 
 2016 Sergey Zagoruyko
+
+Thanks to VisionLabs for putting up https://github.com/VisionLabs/torch-opencv bindings!

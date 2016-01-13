@@ -20,9 +20,14 @@ In Linux you have to build OpenCV3 manually. Follow the instructions in
 # ImageNet classification
 
 The demo simply takes a central crop from a webcam and uses a small ImageNet
-classification pretrained network to classify what it see on it.
+classification pretrained network to classify what it see on it. top-5 predicted
+classes are shown on top, the top one is the most probable.
 
 Run as `th demo.lua`
+
+Example:
+
+![sunglasses](https://cloud.githubusercontent.com/assets/4953728/12299791/d984309e-ba18-11e5-9838-afcfe9cdaf79.png)
 
 # Age&Gender prediction
 
@@ -33,6 +38,10 @@ Run as
 ```
 th demo.lua `locate haarcascade_frontalface_default.xml`
 ```
+
+IMAGINE Lab gives an example:
+
+![age&gender](https://cloud.githubusercontent.com/assets/4953728/12299217/fc819f80-ba15-11e5-95de-653c9fda9b83.png)
 
 # Credits
 

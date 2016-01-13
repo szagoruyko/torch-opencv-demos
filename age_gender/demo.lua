@@ -9,12 +9,6 @@ assert(arg[1], 'please provide a path to haarcascade_frontalface_default.xml')
 local cascade_path = arg[1]
 local face_cascade = cv.CascadeClassifier{filename=cascade_path}
 
-local cap = cv.VideoCapture{device=0}
-assert(cap:isOpened(), "Failed to open the default camera")
-
-cv.namedWindow{winname="torch-OpenCV Age&Gender demo", flags=cv.WINDOW_AUTOSIZE}
-local _, frame = cap:read{}
-
 local fx = 0.5  -- rescale factor
 local M = 227   -- input image size
 local ages = {'0-2','4-6','8-13','15-20','25-32','38-43','48-53','60-'}
@@ -28,13 +22,19 @@ local download_list = {
 }
 
 for k,v in ipairs(download_list) do
-  if not paths.filep(v.name) then os.execute('wget '..v.url) end
+  if not paths.filep(v.name) then os.execute('wget '..v.url..' -o '..v.name) end
 end
 
-local gender_net = loadcaffe.load('./deploy_gender.prototxt', './gender_net.caffemodel'):float()
-local age_net = loadcaffe.load('./deploy_age.prototxt', './age_net.caffemodel'):float()
+local gender_net = loadcaffe.load('./deploy_gender.prototxt', './gender_net.caffemodel')
+local age_net = loadcaffe.load('./deploy_age.prototxt', './age_net.caffemodel')
 
 local img_mean = torch.load'./age_gender_mean.t7':permute(3,1,2):float()
+
+local cap = cv.VideoCapture{device=0}
+assert(cap:isOpened(), "Failed to open the default camera")
+
+cv.namedWindow{winname="torch-OpenCV Age&Gender demo", flags=cv.WINDOW_AUTOSIZE}
+local _, frame = cap:read{}
 
 while true do
    local w = frame:size(2)
@@ -51,12 +51,13 @@ while true do
       local w = f.width/fx
       local h = f.height/fx
 
-      -- crop and prepare image for convnet
+      -- crop and prepare image for convnets
       local crop = cv.getRectSubPix{
         image=frame,
         patchSize={w, h},
         center={x + w/2, y + h/2},
       }
+      if crop then
       local im = cv.resize{src=crop, dsize={256,256}}:float()
       local im2 = im - img_mean
       local I = cv.resize{src=im2, dsize={M,M}}:permute(3,1,2):clone()
@@ -79,6 +80,7 @@ while true do
          color={255, 255, 0},
          thickness=1
       }
+   end
    end
 
    cv.imshow{winname="torch-OpenCV Age&Gender demo", image=frame}

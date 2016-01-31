@@ -25,8 +25,8 @@ for k,v in ipairs(download_list) do
   if not paths.filep(v.name) then os.execute('wget '..v.url..' -o '..v.name) end
 end
 
-local gender_net = loadcaffe.load('./deploy_gender.prototxt', './gender_net.caffemodel')
-local age_net = loadcaffe.load('./deploy_age.prototxt', './age_net.caffemodel')
+local gender_net = loadcaffe.load('./deploy_gender.prototxt', './gender_net.caffemodel'):float()
+local age_net = loadcaffe.load('./deploy_age.prototxt', './age_net.caffemodel'):float()
 
 local img_mean = torch.load'./age_gender_mean.t7':permute(3,1,2):float()
 

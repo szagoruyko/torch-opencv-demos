@@ -22,7 +22,7 @@ local download_list = {
 }
 
 for k,v in ipairs(download_list) do
-  if not paths.filep(v.name) then os.execute('wget '..v.url..' -o '..v.name) end
+  if not paths.filep(v.name) then os.execute('wget '..v.url..' -O '..v.name) end
 end
 
 local gender_net = loadcaffe.load('./deploy_gender.prototxt', './gender_net.caffemodel'):float()

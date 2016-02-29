@@ -5,70 +5,80 @@ require 'cv.cudaobjdetect'
 require 'cv.cudaimgproc'
 require 'nn'
 
-assert(arg[1], 'Please provide a path to haarcascades_cuda/haarcascade_frontalface_default.xml')
-local faceDetector = cv.cuda.CascadeClassifier{arg[1]}
+if not arg[1] or not arg[2] then
+    print[[
+Usage: th demo.lua P N [Name1 Name2 ...]
+
+Where
+    P: Path to your `haarcascades_cuda/haarcascade_frontalface_default.xml`
+    N: Number of different people to recognize (2..9)
+    Name1, Name2, ...: Optional people names
+]]
+    os.exit(-1)
+end
+
+--local faceDetector = cv.cuda.CascadeClassifier{arg[1]}
 
 print('Loading the network...')
 local network = torch.load('./VGG_FACE.t7')
 network:evaluate()
 
-os.exit(0)
+local capture = cv.VideoCapture{device=0}
+assert(capture:isOpened(), 'Failed to open the default camera')
 
-local cap = cv.VideoCapture{device=0}
-assert(cap:isOpened(), "Failed to open the default camera")
+cv.namedWindow{'Stream window'}
+cv.namedWindow{ 'Faces window'}
+cv.setWindowTitle{'Faces window', 'Grabbed faces'}
 
-cv.namedWindow{winname="torch-OpenCV Age&Gender demo", flags=cv.WINDOW_AUTOSIZE}
-local _, frame = cap:read{}
+-- **************************  Labeling the data **************************
 
-while true do
-   local w = frame:size(2)
-   local h = frame:size(1)
+local N = assert(tonumber(arg[2]))
+local stillLabeling = true
+local pause = false
+local currentFaceNumber
 
-   local im2 = cv.resize{src=frame, fx=fx, fy=fx}
-   cv.cvtColor{src=im2, dst=im2, code=cv.COLOR_BGR2GRAY}
+local function updateFaceNumber(faceNumber)
+    if faceNumber > N then return end
+    currentFaceNumber = faceNumber
+    cv.setWindowTitle{
+        'Stream window', 
+        'Labeling face #'..faceNumber..'. Press Enter when done'}
+end
 
-   local faces = face_cascade:detectMultiScale{image = im2}
-   for i=1,faces.size do
-      local f = faces.data[i]
-      local x = f.x/fx
-      local y = f.y/fx
-      local w = f.width/fx
-      local h = f.height/fx
+updateFaceNumber(1)
 
-      -- crop and prepare image for convnets
-      local crop = cv.getRectSubPix{
-        image=frame,
-        patchSize={w, h},
-        center={x + w/2, y + h/2},
-      }
-      if crop then
-      local im = cv.resize{src=crop, dsize={256,256}}:float()
-      local im2 = im - img_mean
-      local I = cv.resize{src=im2, dsize={M,M}}:permute(3,1,2):clone()
+local faceSamples = {}
+for i = 1,N do faceSamples[i] = {} end
 
-      -- classify
-      local gender_out = gender_net:forward(I)
-      local gender = gender_out[1] > gender_out[2] and 'M' or 'F'
+local function enoughFaceSamples()
+    local minNumber = 1e9
+    for i = 1,N do minNumber = math.min(minNumber, #faceSamples[i]) end
+    return minNumber >= 2
+end
 
-      local age_out = age_net:forward(I)
-      local _,id = age_out:max(1)
-      local age = ages[id[1] ]
+local _, frame = capture:read{}
 
-      cv.rectangle{img=frame, pt1={x, y}, pt2={x + w, y + h}, color={255,0,255,0}}
-      cv.putText{
-         img=frame,
-         text = gender..': '..age,
-         org={x, y},
-         fontFace=cv.FONT_HERSHEY_DUPLEX,
-         fontScale=1,
-         color={255, 255, 0},
-         thickness=1
-      }
-   end
-   end
+-- Labeling loop
+while stillLabeling do
 
-   cv.imshow{winname="torch-OpenCV Age&Gender demo", image=frame}
-   if cv.waitKey{30} >= 0 then break end
+   
+    cv.imshow{'Stream window', frame}
+   
+    local key = cv.waitKey{20}
 
-   cap:read{image=frame}
+    if key >= 49 and key <= 57 then
+        -- key is a digit: change face number to label
+        updateFaceNumber(key-48)
+    elseif key == 32 then
+        -- key is Space  : set pause
+        pause = not pause
+    elseif key == 13 then
+        -- key is Enter  : end labeling if there are at least 2 samples for each face
+        if enoughFaceSamples() then stillLabeling = false end
+    elseif key == 27 then
+        -- key is Esc    : quit
+        os.exit(0)
+    end
+
+    if not pause then capture:read{frame} end
 end

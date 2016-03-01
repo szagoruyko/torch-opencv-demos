@@ -2,7 +2,8 @@ local cv = require 'cv'
 require 'cv.highgui'
 require 'cv.videoio'
 require 'cv.cudaobjdetect'
-require 'cv.cudaimgproc'
+require 'cv.cudawarping' -- resize
+require 'cv.cudaimgproc' -- cvtColor
 require 'nn'
 
 if not arg[1] or not arg[2] then
@@ -33,6 +34,12 @@ cv.setWindowTitle{'Faces window', 'Grabbed faces'}
 -- **************************  Labeling the data **************************
 
 local N = assert(tonumber(arg[2]))
+
+local peopleNames = {}
+for i = 1,N do
+    peopleNames[i] = arg[2 + i] or 'Person #'..i
+end
+
 local stillLabeling = true
 local pause = false
 local currentFaceNumber
@@ -42,7 +49,7 @@ local function updateFaceNumber(faceNumber)
     currentFaceNumber = faceNumber
     cv.setWindowTitle{
         'Stream window', 
-        'Labeling face #'..faceNumber..'. Press Enter when done'}
+        'Labeling '..peopleNames[faceNumber]..'\'s face. Press Enter when done'}
 end
 
 updateFaceNumber(1)
@@ -57,17 +64,28 @@ local function enoughFaceSamples()
 end
 
 local _, frame = capture:read{}
+local frameCUDA = torch.CudaTensor(frame:size())
+local scaleFactor = 0.5
+local frameCUDAGray = torch.CudaTensor((#frame)[1] * scaleFactor, (#frame)[2] * scaleFactor)
 
 -- Labeling loop
 while stillLabeling do
+    -- upload image to GPU and normalize it from [0..255] to [0..1]
+    frameCUDA:copy(frame):div(255)
+    -- convert to grayscale and store result in original image's blue channel
+    cv.cuda.cvtColor{frameCUDA, frameCUDA:select(3,1), cv.COLOR_BGR2GRAY}
+    -- resize it
+    cv.cuda.resize{frameCUDA:select(3,1), dst=frameCUDAGray, fx=scaleFactor, fy=scaleFactor}
+    
+    --local faces = faceDetector:detectMultiScale{frameCUDAGray}
+    local t = frameCUDAGray:float()
 
-   
-    cv.imshow{'Stream window', frame}
+    cv.imshow{'Stream window', t}
    
     local key = cv.waitKey{20}
 
     if key >= 49 and key <= 57 then
-        -- key is a digit: change face number to label
+        -- key is a digit: change current number of face to be labeled
         updateFaceNumber(key-48)
     elseif key == 32 then
         -- key is Space  : set pause

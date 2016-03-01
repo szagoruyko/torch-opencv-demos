@@ -1,9 +1,10 @@
 local cv = require 'cv'
-require 'cv.highgui'
-require 'cv.videoio'
-require 'cv.cudaobjdetect'
-require 'cv.cudawarping' -- resize
-require 'cv.cudaimgproc' -- cvtColor
+require 'cv.highgui'       -- GUI: windows, mouse
+require 'cv.videoio'       -- VideoCapture
+require 'cv.cudaobjdetect' -- CascadeClassifier
+require 'cv.cudawarping'   -- resize
+require 'cv.cudaimgproc'   -- cvtColor
+require 'cv.imgproc'       -- rectangle
 require 'nn'
 
 if not arg[1] or not arg[2] then
@@ -18,7 +19,7 @@ Where
     os.exit(-1)
 end
 
---local faceDetector = cv.cuda.CascadeClassifier{arg[1]}
+local faceDetector = cv.cuda.CascadeClassifier{arg[1]}
 
 print('Loading the network...')
 local network = torch.load('./VGG_FACE.t7')
@@ -65,22 +66,41 @@ end
 
 local _, frame = capture:read{}
 local frameCUDA = torch.CudaTensor(frame:size())
+
 local scaleFactor = 0.5
 local frameCUDAGray = torch.CudaTensor((#frame)[1] * scaleFactor, (#frame)[2] * scaleFactor)
 
 -- Labeling loop
 while stillLabeling do
-    -- upload image to GPU and normalize it from [0..255] to [0..1]
-    frameCUDA:copy(frame):div(255)
-    -- convert to grayscale and store result in original image's blue channel
-    cv.cuda.cvtColor{frameCUDA, frameCUDA:select(3,1), cv.COLOR_BGR2GRAY}
-    -- resize it
-    cv.cuda.resize{frameCUDA:select(3,1), dst=frameCUDAGray, fx=scaleFactor, fy=scaleFactor}
-    
-    --local faces = faceDetector:detectMultiScale{frameCUDAGray}
-    local t = frameCUDAGray:float()
+    if not pause then
+        -- upload image to GPU and normalize it from [0..255] to [0..1]
+        frameCUDA:copy(frame):div(255)
+        -- convert to grayscale and store result in original image's blue (first) channel
+        cv.cuda.cvtColor{frameCUDA, frameCUDA:select(3,1), cv.COLOR_BGR2GRAY}
+        -- resize it
+        cv.cuda.resize{frameCUDA:select(3,1), dst=frameCUDAGray, fx=scaleFactor, fy=scaleFactor}
+        
+        -- detect faces in downsampled image
+        local faces = faceDetector:detectMultiScale{frameCUDAGray}
+        -- convert faces to RectArray from OpenCV-CUDA's internal representation
+        faces = faceDetector:convert{faces}
+        
+        -- draw faces
+        for i = 1,faces.size do
+            local f = faces.data[i]
+            -- translate face coordinates to the original big image
+            f.x      = f.x      / scaleFactor
+            f.y      = f.y      / scaleFactor
+            f.width  = f.width  / scaleFactor
+            f.height = f.height / scaleFactor
 
-    cv.imshow{'Stream window', t}
+            cv.rectangle{
+                frame, {f.x, f.y}, {f.x + f.width, f.y + f.height}, 
+                color = {30,30,180}, thickness = 2}
+        end
+    end
+
+    cv.imshow{'Stream window', frame}
    
     local key = cv.waitKey{20}
 

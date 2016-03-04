@@ -9,52 +9,68 @@ cv.ml = require 'cv.ml'    -- SVM
 
 require 'cutorch'
 require 'cunn'
+require 'dpnn' -- nn.Inception
 
 -------------------------------------------------------------------------------
 -- Describe command line arguments
 -------------------------------------------------------------------------------
-if not arg[1] or not arg[2] then
+if not arg[1] then
     print[[
-Usage: th demo.lua P N [Name1 Name2 ...]
+Usage: th demo.lua [N [Name1 Name2 ...] ]
 
 Where
-    P: Path to your `haarcascades_cuda/haarcascade_frontalface_default.xml`
     N: Number of different people to recognize (2..9)
-    Name1, Name2, ...: Optional people names
+    Name1, Name2, ...: Their names (optional)
 ]]
     os.exit(-1)
 end
+
+print('')
+print('================== Use 1..9 keys to change the person to be labeled ==================')
+print('==================        Double-click the face to label it         ==================')
+print('==================         Press Space to pause the stream          ==================')
+print('')
 
 -------------------------------------------------------------------------------
 -- Set up machine learning models
 -------------------------------------------------------------------------------
 -- Viola-Jones face detector
-local faceDetector = cv.cuda.CascadeClassifier{arg[1]}
+local XMLTarget = 'haarcascades_cuda/haarcascade_frontalface_default.xml'
+print('Looking for '..XMLTarget..'...')
+local command = io.popen('locate '..XMLTarget, 'r')
+local locateOutput = command:read()
+local _, endIndex = locateOutput:find(XMLTarget)
+local detectorParamsFile = locateOutput:sub(1, endIndex)
+command:close()
+assert(paths.filep(detectorParamsFile), XMLTarget..' not found!')
 
--- Convolutional neural network face descriptor by VGG
+local faceDetector = cv.cuda.CascadeClassifier{detectorParamsFile}
+
+-- OpenFace convolutional neural network face descriptor
 print('Loading the network...')
-local network = torch.load('./VGG_FACE.t7')
-network:remove() -- remove softmax layer
-network:remove() -- remove last fully connected layer
+local networkURL = 'http://openface-models.storage.cmusatyalab.org/nn4.small2.v1.t7'
+local networkName = paths.basename(networkURL)
+if not paths.filep(networkName) then os.execute('wget '..networkURL) end
+
+local network = torch.load(networkName)
 network:cuda()   -- move network to GPU
-local netInputSize = 224
-local netOutputSize = 4096
-local netMean = {129.1863, 104.7624, 93.5940}
-network:evaluate() -- switch dropout off
+local netInputSize = 96
+local netOutputSize = 128
+network:evaluate()
 local netInput =    torch.CudaTensor(3, netInputSize, netInputSize)
 local netInputHWC = torch.CudaTensor(netInputSize, netInputSize, 3)
 
 -- SVM to classify descriptors in recognition phase
 local svm = cv.ml.SVM{}
 svm:setType         {cv.ml.SVM_C_SVC}
-svm:setKernel       {cv.ml.SVM_LINEAR}
-svm:setDegree       {1}
+svm:setKernel       {cv.ml.SVM_POLY}
+svm:setDegree       {2}
 svm:setTermCriteria {{cv.TermCriteria_MAX_ITER, 100, 1e-6}}
 
 -------------------------------------------------------------------------------
 -- Set up video stream and GUI, unpack input arguments
 -------------------------------------------------------------------------------
-local capture = cv.VideoCapture{device=0}
+local capture = cv.VideoCapture{'/home/shrubb/Videos/FOB.mp4'}
 assert(capture:isOpened(), 'Failed to open the default camera')
 
 -- create two windows
@@ -64,7 +80,8 @@ cv.setWindowTitle{'Faces window', 'Grabbed faces'}
 cv.moveWindow{'Stream window', 5, 5}
 cv.moveWindow{'Faces window', 700, 100}
 
-local N = assert(tonumber(arg[2]))
+local N = assert(tonumber(arg[1]))
+assert(N < 10 and N > 0 and N == math.floor(N))
 
 -- prepare the "face gallery"
 local thumbnailSize = 64
@@ -81,7 +98,7 @@ gallery:select(2, 100 + 2*thumbnailSize):select(2, 2):fill(30)
 
 local peopleNames = {}
 for i = 1,N do
-    peopleNames[i] = arg[2 + i] or 'Person #'..i
+    peopleNames[i] = arg[1 + i] or 'Person #'..i
     cv.putText{
         gallery, peopleNames[i]:sub(1,10), {2, thumbnailSize*(i-1) + 36}, 
         fontFace=cv.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color={160,30,30}}
@@ -139,9 +156,9 @@ local function getDescriptor(croppedFace, rect)
 
     -- pass it forward through CNN
     for i = 1,3 do
-        netInput[i]:add(-netMean[i])
+        netInput[i]:div(255)
     end
-    return network:forward(netInput):float()
+    return network:forward(netInput:view(1, 3, netInputSize, netInputSize)):float()
 end
 
 -------------------------------------------------------------------------------
@@ -233,6 +250,7 @@ while true do
             -- key is Enter  : end labeling if there are at least 2 samples for each face
             if enoughFaces() then
                 stillLabeling = false
+                cv.setWindowTitle{'Stream window', 'Live Recognition'}
 
                 -- prepare data for feeding to SVM
                 local totalFaces = 0
@@ -287,7 +305,7 @@ while true do
             -- draw predicted name above the rectangle
             cv.putText{
                 frame, peopleNames[person], {f.x, f.y-3}, 
-                fontFace=cv.FONT_HERSHEY_SIMPLEX, color={30,30,210}, 
+                fontFace=cv.FONT_HERSHEY_SIMPLEX, color={255,255,30}, 
                 fontScale=1, thickness=2}
         end
     end

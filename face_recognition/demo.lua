@@ -16,11 +16,21 @@ require 'dpnn' -- nn.Inception
 -------------------------------------------------------------------------------
 if not arg[1] then
     print[[
-Usage: th demo.lua [N [Name1 Name2 ...] ]
+Usage: th demo.lua video_source [N [Name1 Name2 ...] ]
 
 Where
-    N: Number of different people to recognize (2..9)
-    Name1, Name2, ...: Their names (optional)
+  * video_source:
+
+        Video source to capture.
+        If "camera", then default camera is used.
+        Otherwise, `video_source` is assumed to be a path to a video file.
+
+  * N:
+        Number of different people to recognize (2..9).
+
+  * Name1, Name2, ...: 
+
+        Their names (optional).
 ]]
     os.exit(-1)
 end
@@ -70,8 +80,8 @@ svm:setTermCriteria {{cv.TermCriteria_MAX_ITER, 100, 1e-6}}
 -------------------------------------------------------------------------------
 -- Set up video stream and GUI, unpack input arguments
 -------------------------------------------------------------------------------
-local capture = cv.VideoCapture{'/home/shrubb/Videos/FOB.mp4'}
-assert(capture:isOpened(), 'Failed to open the default camera')
+local capture = cv.VideoCapture{arg[1] == 'camera' and 0 or arg[1]}
+assert(capture:isOpened(), 'Failed to open '..arg[1])
 
 -- create two windows
 cv.namedWindow{'Stream window'}

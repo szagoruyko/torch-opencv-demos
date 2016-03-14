@@ -5,9 +5,31 @@ require 'cv.videoio'
 require 'cv.imgproc'
 require 'loadcaffe'
 
-assert(arg[1], 'please provide a path to haarcascade_frontalface_default.xml')
-local cascade_path = arg[1]
-local face_cascade = cv.CascadeClassifier{filename=cascade_path}
+if not arg[1] then
+    print[[
+Usage: th demo.lua video_source
+
+Where
+  * video_source:
+
+        Video source to capture.
+        If "camera", then default camera is used.
+        Otherwise, `video_source` is assumed to be a path to a video file.
+]]
+    os.exit(-1)
+end
+
+-- Viola-Jones face detector
+local XMLTarget = 'haarcascades/haarcascade_frontalface_default.xml'
+print('Looking for '..XMLTarget..'...')
+local command = io.popen('locate '..XMLTarget, 'r')
+local locateOutput = command:read()
+local _, endIndex = locateOutput:find(XMLTarget)
+local detectorParamsFile = locateOutput:sub(1, endIndex)
+command:close()
+assert(paths.filep(detectorParamsFile), XMLTarget..' not found!')
+
+local face_cascade = cv.CascadeClassifier{detectorParamsFile}
 
 local fx = 0.5  -- rescale factor
 local M = 227   -- input image size
@@ -30,34 +52,39 @@ local age_net = loadcaffe.load('./deploy_age.prototxt', './age_net.caffemodel'):
 
 local img_mean = torch.load'./age_gender_mean.t7':permute(3,1,2):float()
 
-local cap = cv.VideoCapture{device=0}
-assert(cap:isOpened(), "Failed to open the default camera")
+local cap = cv.VideoCapture{arg[1] == 'camera' and 0 or arg[1]}
+assert(cap:isOpened(), 'Failed to open '..arg[1])
 
-cv.namedWindow{winname="torch-OpenCV Age&Gender demo", flags=cv.WINDOW_AUTOSIZE}
-local _, frame = cap:read{}
+local ok, frame = cap:read{}
+
+if not ok then
+  print("Couldn't retrieve frame!")
+  os.exit(-1)
+end
 
 while true do
-   local w = frame:size(2)
-   local h = frame:size(1)
+  local w = frame:size(2)
+  local h = frame:size(1)
 
-   local im2 = cv.resize{src=frame, fx=fx, fy=fx}
-   cv.cvtColor{src=im2, dst=im2, code=cv.COLOR_BGR2GRAY}
+  local im2 = cv.resize{frame, fx=fx, fy=fx}
+  cv.cvtColor{im2, dst=im2, code=cv.COLOR_BGR2GRAY}
 
-   local faces = face_cascade:detectMultiScale{image = im2}
-   for i=1,faces.size do
-      local f = faces.data[i]
-      local x = f.x/fx
-      local y = f.y/fx
-      local w = f.width/fx
-      local h = f.height/fx
+  local faces = face_cascade:detectMultiScale{im2}
+  for i=1,faces.size do
+    local f = faces.data[i]
+    local x = f.x/fx
+    local y = f.y/fx
+    local w = f.width/fx
+    local h = f.height/fx
 
       -- crop and prepare image for convnets
-      local crop = cv.getRectSubPix{
-        image=frame,
-        patchSize={w, h},
-        center={x + w/2, y + h/2},
-      }
-      if crop then
+    local crop = cv.getRectSubPix{
+      image=frame,
+      patchSize={w, h},
+      center={x + w/2, y + h/2},
+    }
+
+    if crop then
       local im = cv.resize{src=crop, dsize={256,256}}:float()
       local im2 = im - img_mean
       local I = cv.resize{src=im2, dsize={M,M}}:permute(3,1,2):clone()
@@ -70,21 +97,21 @@ while true do
       local _,id = age_out:max(1)
       local age = ages[id[1] ]
 
-      cv.rectangle{img=frame, pt1={x, y}, pt2={x + w, y + h}, color={255,0,255,0}}
+      cv.rectangle{frame, pt1={x, y+3}, pt2={x + w, y + h}, color={30,255,30}}
       cv.putText{
-         img=frame,
-         text = gender..': '..age,
-         org={x, y},
-         fontFace=cv.FONT_HERSHEY_DUPLEX,
-         fontScale=1,
-         color={255, 255, 0},
-         thickness=1
+        frame,
+        gender..': '..age,
+        org={x, y},
+        fontFace=cv.FONT_HERSHEY_DUPLEX,
+        fontScale=1,
+        color={255, 255, 0},
+        thickness=1
       }
-   end
-   end
+    end
+  end
 
-   cv.imshow{winname="torch-OpenCV Age&Gender demo", image=frame}
-   if cv.waitKey{30} >= 0 then break end
+  cv.imshow{"torch-OpenCV Age&Gender demo", frame}
+  ok = cap:read{frame}
 
-   cap:read{image=frame}
+  if cv.waitKey{1} >= 0 or not ok then break end
 end

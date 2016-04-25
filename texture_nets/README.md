@@ -3,7 +3,7 @@ Realtime texture_nets
 
 This enables realtime stylization with texture networks, for more information check https://github.com/DmitryUlyanov/texture_nets
 
-For now one 'starry night' model is available, we will add more in future.
+For now 'starry night' and 'pollock' models are available, we will add more in future.
 
 ![screen shot 2016-04-25 at 00 08 15](https://cloud.githubusercontent.com/assets/4953728/14781476/fa8a7c1a-0ae2-11e6-88fb-10e2bf418d86.png)
 

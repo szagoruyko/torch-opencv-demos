@@ -62,8 +62,14 @@ Caption is displayed on top:
 
 ![neuraltalk2](https://cloud.githubusercontent.com/assets/4953728/12300267/01abc18e-ba1b-11e5-8b2b-da9c9141fd55.png)
 
+# Realtime stylization with texture networks
+
+Check https://github.com/DmitryUlyanov/texture_nets
+
+![screen shot 2016-04-25 at 00 08 15](https://cloud.githubusercontent.com/assets/4953728/14781476/fa8a7c1a-0ae2-11e6-88fb-10e2bf418d86.png)
+
 # Credits
 
-2016 Sergey Zagoruyko
+2016 Sergey Zagoruyko and Egor Burkov
 
 Thanks to VisionLabs for putting up https://github.com/VisionLabs/torch-opencv bindings!

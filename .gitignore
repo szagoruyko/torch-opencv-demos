@@ -1,0 +1,5 @@
+*.t7
+*.caffemodel
+*.prototxt
+*.prototxt.lua
+*.jpg

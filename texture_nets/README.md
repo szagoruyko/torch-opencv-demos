@@ -5,6 +5,8 @@ This enables realtime stylization with texture networks, for more information ch
 
 For now one 'starry night' model is available, we will add more in future.
 
+![screen shot 2016-04-25 at 00 08 15](https://cloud.githubusercontent.com/assets/4953728/14781476/fa8a7c1a-0ae2-11e6-88fb-10e2bf418d86.png)
+
 # Usage
 
 The demo depends on folding Batch Normalization into convolution in [imagine-nn](https://github.com/szagoruyko/imagine-nn), to install it do:
@@ -36,6 +38,8 @@ video_path=*path to file* th stylization.lua
 ```
 
 # Model 
+
+![outfile](https://cloud.githubusercontent.com/assets/4953728/14781485/02f31ad8-0ae3-11e6-9cdc-8660c34384b3.png)
 
 # Credits
 

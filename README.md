@@ -30,7 +30,7 @@ Run as `th demo.lua`
 
 Example:
 
-![sunglasses](https://cloud.githubusercontent.com/assets/4953728/12299791/d984309e-ba18-11e5-9838-afcfe9cdaf79.png)
+![sunglasses](https://cloud.githubusercontent.com/assets/4953728/14815521/2095c832-0bac-11e6-80bc-09b19c13271d.png)
 
 # Age&Gender prediction
 
@@ -60,7 +60,7 @@ th videocaptioning.lua -gpuid -1 -model model_id1-501-1448236541_cpu.t7
 
 Caption is displayed on top:
 
-![neuraltalk2](https://cloud.githubusercontent.com/assets/4953728/12300267/01abc18e-ba1b-11e5-8b2b-da9c9141fd55.png)
+![neuraltalk2](https://cloud.githubusercontent.com/assets/4953728/14815525/23cfb3aa-0bac-11e6-84fd-dd0f7a33422d.png)
 
 # Realtime stylization with texture networks
 

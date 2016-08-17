@@ -90,7 +90,7 @@ cv.setWindowTitle{'Faces window', 'Grabbed faces'}
 cv.moveWindow{'Stream window', 5, 5}
 cv.moveWindow{'Faces window', 700, 100}
 
-local N = assert(tonumber(arg[1]))
+local N = assert(tonumber(arg[2] or '2'))
 assert(N < 10 and N > 0 and N == math.floor(N))
 
 -- prepare the "face gallery"
@@ -108,7 +108,7 @@ gallery:select(2, 100 + 2*thumbnailSize):select(2, 2):fill(30)
 
 local peopleNames = {}
 for i = 1,N do
-    peopleNames[i] = arg[1 + i] or 'Person #'..i
+    peopleNames[i] = arg[2 + i] or 'Person #'..i
     cv.putText{
         gallery, peopleNames[i]:sub(1,10), {2, thumbnailSize*(i-1) + 36}, 
         fontFace=cv.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color={160,30,30}}
@@ -212,6 +212,12 @@ end
 
 cv.setMouseCallback{'Stream window', onMouse}
 
+local KEY_1     = 49
+local KEY_9     = 57
+local KEY_Space = 32
+local KEY_Enter = 10
+local KEY_Esc   = 27
+
 -------------------------------------------------------------------------------
 -- The main loop
 -------------------------------------------------------------------------------
@@ -244,19 +250,19 @@ while true do
         end
     end
 
-    local key = cv.waitKey{20}
+    local key = cv.waitKey{20} % 256
 
     if stillLabeling then
         -----------------------------------------------------------------------
         -- Labeling phase
         -----------------------------------------------------------------------
-        if key >= 49 and key <= 57 then
+        if key >= KEY_1 and key <= KEY_9 then
             -- key is a digit: change current number of face to be labeled
-            updateFaceNumber(key-48)
-        elseif key == 32 then
+            updateFaceNumber(key-KEY_1+1)
+        elseif key == KEY_Space then
             -- key is Space  : set pause
             pause = not pause
-        elseif key == 10 then
+        elseif key == KEY_Enter then
             -- key is Enter  : end labeling if there are at least 2 samples for each face
             if enoughFaces() then
                 stillLabeling = false
@@ -282,7 +288,7 @@ while true do
 
                 svm:train{svmDataX, cv.ml.ROW_SAMPLE, svmDataY}
             end
-        elseif key == 27 then
+        elseif key == KEY_Esc then
             -- key is Esc    : quit
             os.exit(0)
         end
@@ -290,10 +296,10 @@ while true do
         -----------------------------------------------------------------------
         -- Recognition phase
         -----------------------------------------------------------------------
-        if key == 32 then
+        if key == KEY_Space then
             -- key is Space  : set pause
             pause = not pause
-        elseif key == 27 then
+        elseif key == KEY_Esc then
             -- key is Esc    : quit
             os.exit(0)
         end

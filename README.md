@@ -18,7 +18,7 @@ luarocks install loadcaffe
 In Linux you have to build OpenCV3 manually. Follow the instructions in
 
 * https://github.com/VisionLabs/torch-opencv
-* https://githib.com/szagoruyko/loadcaffe
+* https://github.com/szagoruyko/loadcaffe
 
 # ImageNet classification
 

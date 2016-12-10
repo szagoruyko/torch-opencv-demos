@@ -6,6 +6,10 @@ what they see in real-time from a webcam stream.
 
 All demos use CPU, but it's trivial to fix them to work with CUDA or OpenCL.
 
+There's a [Docker image](https://github.com/riomus/torch-opencv-demos-docker) to make installation & experiments easier.
+
+Otherwise...
+
 Quick install on OS X:
 
 ```bash

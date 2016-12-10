@@ -7,7 +7,7 @@ require 'loadcaffe'
 
 if not arg[1] then
     print[[
-Usage: th demo.lua video_source
+Usage: th demo.lua video_source [path-to-'haarcascade_frontalface_default.xml']
 
 Where
   * video_source:
@@ -15,6 +15,11 @@ Where
         Video source to capture.
         If "camera", then default camera is used.
         Otherwise, `video_source` is assumed to be a path to a video file.
+
+  * path-to-'haarcascade_frontalface_default.xml':
+
+        Optional argument, path to OpenCV's haarcascade_frontalface_default.xml.
+        Use it if your `locate` command isn't able to find it it automatically.
 ]]
     os.exit(-1)
 end
@@ -25,9 +30,10 @@ print('Looking for '..XMLTarget..'...')
 local command = io.popen('locate '..XMLTarget, 'r')
 local locateOutput = command:read()
 local _, endIndex = locateOutput:find(XMLTarget)
-local detectorParamsFile = locateOutput:sub(1, endIndex)
+local detectorParamsFile = locateOutput:sub(1, endIndex) or arg[2]
 command:close()
-assert(paths.filep(detectorParamsFile), XMLTarget..' not found!')
+assert(paths.filep(detectorParamsFile), 
+       XMLTarget..' not found! Try using the second cmdline argument')
 
 local face_cascade = cv.CascadeClassifier{detectorParamsFile}
 

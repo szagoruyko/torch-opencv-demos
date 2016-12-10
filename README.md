@@ -15,7 +15,7 @@ brew install protobuf
 luarocks install loadcaffe
 ```
 
-In Linux you have to build OpenCV3 manually. Follow the instructions in
+In Linux you have to build OpenCV 3 manually. Follow the instructions in
 
 * https://github.com/VisionLabs/torch-opencv
 * https://github.com/szagoruyko/loadcaffe
@@ -39,8 +39,10 @@ to predict age and gender of the faces that it finds with a simple cascade detec
 
 Run as
 ```
-th demo.lua `locate haarcascade_frontalface_default.xml`
+th demo.lua video_source [path-to-'haarcascade_frontalface_default.xml']
 ```
+
+Where `video_source` is `camera` or path to a video file, and the second argument is optional.
 
 IMAGINE Lab gives an example:
 

@@ -46,7 +46,7 @@ local download_list = {
   {name='gender_net.caffemodel',  url='https://dl.dropboxusercontent.com/u/38822310/gender_net.caffemodel'},
   {name='deploy_age.prototxt',    url='https://git.io/vzZnX'},
   {name='deploy_gender.prototxt', url='https://git.io/vzZny'},
-  {name='age_gender_mean.t7',     url='https://dl.dropboxusercontent.com/u/44617616/age_gender_mean.t7'}
+  {name='age_gender_mean.t7',     url='https://www.dropbox.com/s/wa61ihl8l9z89e8/age_gender_mean.t7'}
 }
 
 for k,v in ipairs(download_list) do

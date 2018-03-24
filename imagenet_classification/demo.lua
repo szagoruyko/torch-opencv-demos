@@ -24,7 +24,7 @@ if not paths.filep(network_name) then os.execute('wget '..network_url)   end
 
 print '==> Loading network'
 -- Using network in network http://openreview.net/document/9b05a3bb-3a5e-49cb-91f7-0f482af65aea
-local net = torch.load(network_name):unpack():float()
+local net = torch.load(network_name).model:float()
 local synset_words = torch.load('synset.t7','ascii')
 
 local M = 224

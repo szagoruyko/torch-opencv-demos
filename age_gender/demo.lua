@@ -42,10 +42,10 @@ local M = 227   -- input image size
 local ages = {'0-2','4-6','8-13','15-20','25-32','38-43','48-53','60-'}
 
 local download_list = {
-  {name='age_net.caffemodel',     url='https://dl.dropboxusercontent.com/u/38822310/age_net.caffemodel'},
-  {name='gender_net.caffemodel',  url='https://dl.dropboxusercontent.com/u/38822310/gender_net.caffemodel'},
-  {name='deploy_age.prototxt',    url='https://git.io/vzZnX'},
-  {name='deploy_gender.prototxt', url='https://git.io/vzZny'},
+  {name='age_net.caffemodel',     url='https://github.com/eveningglow/age-and-gender-classification/raw/master/model/age_net.caffemodel'},
+  {name='gender_net.caffemodel',  url='https://github.com/eveningglow/age-and-gender-classification/raw/master/model/gender_net.caffemodel'},
+  {name='deploy_age.prototxt',    url='https://github.com/eveningglow/age-and-gender-classification/raw/master/model/deploy_age2.prototxt'},
+  {name='deploy_gender.prototxt', url='https://github.com/eveningglow/age-and-gender-classification/raw/master/model/deploy_gender2.prototxt'},
   {name='age_gender_mean.t7',     url='https://www.dropbox.com/s/wa61ihl8l9z89e8/age_gender_mean.t7'}
 }
 

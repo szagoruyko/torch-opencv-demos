@@ -44,7 +44,7 @@ end
 -- yes, that's true, net takes 0-1 input and output is VGG
 local function preprocess(frame)
    local frame1 = frame:permute(3,1,2):float() / 255
-   frame1 = image.scale(frame1, opt.frame_height)
+   frame1 = image.scale(frame1, opt.frame_height, opt.frame_height / 2)
    return frame1:view(1,table.unpack(frame1:size():totable()))
 end
 
